@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="coke">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공짜 콜라 자판기 · 리뷰 자판기</title>
+<link rel="icon" href="favicon-coin.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="공짜 콜라 자판기 · 리뷰 자판기">
+<meta property="og:description" content="키워드만 넣으면 리뷰가 톡- 하고 나오는 리뷰 자판기">
+<meta property="og:image" content="OGimage.svg">
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.1/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css');
+  :root{
+    /* ── 펩시 제로 (기본) ── */
+    --bg:#EFECE6;        /* 전체 배경 (크림) */
+    --card:#FFFFFF;      /* 카드 메인 */
+    --card2:#F6F3EF;     /* 레이어용 밝은 톤 */
+    --line:#E7E1D9;      /* 경계선 */
+    --txt:#160F0C;       /* 메인 텍스트 (다크) */
+    --sub:#8A817A;       /* 서브 텍스트 */
+    --accent:#160F0C;    /* 다크 메인 */
+    --accent-d:#2E211A;  /* 다크 호버 */
+    --ink:#160F0C;       /* 텍스트·배출구 등 다크요소 */
+    --machine:#160F0C;   /* 자판기 본체 */
+    --chip:#F6F3EF;      /* 칩 배경 (미선택) */
+    --chip-txt:#160F0C;  /* 칩 텍스트 */
+    --chip-on:#DEFF3A; --chip-on-txt:#160F0C;  /* 선택 칩 */
+    --tray:#33373f;      /* 배출구 트레이 */
+    --star:#DEFF3A; --pop:#DEFF3A; --warn:#DEFF3A;
+    --copy-bg:#DEFF3A; --copy-txt:#160F0C; --copy-hover:#C6E82A;
+    --coin-hover:#C6E82A;
+  }
+  /* ── 코카콜라 테마 (기본) ── */
+  html[data-theme="coke"]{
+    --txt:#241F1D; --accent:#D8382C; --accent-d:#B82C22; --ink:#241F1D; --machine:#D8382C;
+    --chip:#F6F3EF; --chip-txt:#241F1D; --chip-on:#D8382C; --chip-on-txt:#FFFFFF; --tray:#241F1D;
+    --star:#FFC53D; --pop:#FFD23E; --warn:#FFD23E;
+    --copy-bg:#D8382C; --copy-txt:#FFFFFF; --copy-hover:#B82C22;
+    --coin-hover:#B82C22;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Wanted Sans Variable','Wanted Sans',-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--bg); color:var(--txt); min-height:100vh; padding:32px 16px 60px;
+  }
+  button,input,textarea,select{font-family:inherit}
+  .wrap{max-width:460px;margin:0 auto}
+  /* ── 테마 토글 (우측 상단) ── */
+  .theme-toggle{
+    position:fixed;top:14px;right:14px;z-index:50;display:flex;gap:2px;
+    background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;
+    box-shadow:0 4px 14px rgba(0,0,0,.1);
+  }
+  .theme-toggle button{
+    border:none;background:transparent;color:var(--sub);font-size:12px;font-weight:800;
+    padding:7px 13px;border-radius:999px;cursor:pointer;transition:.12s;white-space:nowrap;
+  }
+  .theme-toggle button.on{background:var(--accent);color:#fff}
+  /* 진열창 캔 이미지 (테마별) */
+  .can{height:58px;width:auto;display:none}
+  html[data-theme="coke"] .can-coke{display:block}
+  html[data-theme="pepsi"] .can-pepsi{display:block}
+  /* ── 자판기 본체 ── */
+  .machine{
+    position:relative;
+    background:var(--machine);border-radius:28px;padding:14px;
+    box-shadow:0 20px 48px rgba(22,15,12,.35), inset 0 0 0 3px rgba(255,255,255,.1);
+  }
+  .reset-btn{
+    position:absolute;top:14px;right:14px;z-index:2;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.14);border:none;border-radius:50%;color:#fff;cursor:pointer;transition:.12s;
+  }
+  .reset-btn:hover{background:rgba(255,255,255,.28)}
+  .reset-btn svg{width:18px;height:18px}
+  .machine-top{text-align:center;padding:12px 10px 16px}
+  .brand{font-size:23px;font-weight:600;letter-spacing:-1px;color:#fff}
+  .brand .em{color:var(--pop);font-size:23px;font-weight:600}
+  .brand-sub{margin-top:7px;font-size:12px;font-weight:600;color:rgba(255,255,255,.82)}
+  /* ── 진열창 (콜라 캔) ── */
+  .window{
+    background:#fff;border-radius:16px;padding:8px 16px;margin-bottom:12px;
+    display:flex;align-items:center;justify-content:center;gap:16px;
+    box-shadow:inset 0 3px 10px rgba(20,15,12,.1);
+  }
+  .window .cap{font-size:13px;font-weight:700;color:var(--accent);line-height:1.5}
+  .window .cap small{display:block;color:var(--sub);font-weight:600;font-size:11px;margin-top:3px}
+  /* ── 조작 패널 ── */
+  .panel{background:var(--card);border-radius:18px;padding:22px;border:1px solid var(--line)}
+  .slot-label{text-align:center;color:rgba(255,255,255,.9);font-size:12px;font-weight:700;letter-spacing:.3px;margin:16px 0 9px}
+  /* ── 배출구(트레이) ── */
+  .tray{
+    background:var(--tray);border-radius:16px;padding:16px;
+    box-shadow:inset 0 4px 14px rgba(0,0,0,.5);
+  }
+  .tray::before{content:"";display:block;height:7px;width:66%;margin:-3px auto 14px;background:#0d0d0d;border-radius:4px}
+  .tray label{color:#EFECE6}
+  .tray .out-head .cnt{color:#b8b0a8}
+  .tray .out-head .cnt b{color:var(--pop)}
+  label{display:block;font-size:13px;color:var(--txt);margin-bottom:11px;font-weight:600;letter-spacing:-.1px}
+  .note{color:var(--sub);font-weight:500;font-size:12px;margin-left:1px}
+  input[type=text],textarea{
+    width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;
+    color:var(--txt);padding:13px 14px;font-size:15px;font-family:inherit;outline:none;transition:.15s;
+  }
+  input[type=text]:focus,textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(20,15,12,.14)}
+  .seg{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .seg::-webkit-scrollbar{height:6px}
+  .seg::-webkit-scrollbar-thumb{background:transparent;border-radius:3px;transition:background .25s}
+  .seg::-webkit-scrollbar-track{background:transparent}
+  .seg:hover,.seg:active,.seg:focus-within{scrollbar-width:thin}
+  .seg:hover::-webkit-scrollbar-thumb,.seg:active::-webkit-scrollbar-thumb{background:#e0d9cf}
+  .seg button{
+    flex:0 0 auto;white-space:nowrap;
+    background:var(--chip);border:1px solid var(--line);color:var(--chip-txt);
+    padding:9px 15px;border-radius:999px;font-size:13px;cursor:pointer;transition:.12s;font-weight:600;
+  }
+  .seg button:hover{filter:brightness(.94)}
+  .seg button.on{background:var(--chip-on);color:var(--chip-on-txt)}
+  .recos{
+    display:flex;gap:8px;flex-wrap:wrap;max-height:120px;overflow-y:auto;
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;scrollbar-width:none;
+  }
+  .recos::-webkit-scrollbar{width:7px}
+  .recos::-webkit-scrollbar-thumb{background:transparent;border-radius:4px;transition:background .25s}
+  .recos::-webkit-scrollbar-track{background:transparent}
+  .recos:hover,.recos:active,.recos:focus-within{scrollbar-width:thin}
+  .recos:hover::-webkit-scrollbar-thumb,.recos:active::-webkit-scrollbar-thumb{background:#cdcdd0}
+  .recos button{
+    background:#fff;border:1px solid var(--line);color:var(--chip-txt);
+    padding:7px 13px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:.12s;
+  }
+  .recos button:hover{filter:brightness(.94)}
+  .recos button.on{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-txt)}
+  .stars{display:flex;gap:5px;font-size:28px;cursor:pointer;user-select:none}
+  .stars span{color:#d4d4d6;transition:.1s}
+  .stars span.on{color:var(--star)}
+  .len-wrap{display:flex;align-items:center;gap:10px;margin-top:4px}
+  .len-wrap input[type=range]{flex:1;accent-color:var(--pop)}
+  .len-val{font-size:13px;color:var(--sub);min-width:64px;text-align:right;font-weight:600}
+  /* 동전 투입구 버튼 */
+  .coinbtn{
+    position:relative;width:100%;margin-top:14px;padding:9px 16px 10px;
+    background:var(--ink);border:none;border-radius:14px;cursor:pointer;overflow:hidden;color:#fff;transition:.12s;
+  }
+  .coinbtn:hover{background:var(--coin-hover)}
+  .coinbtn:active{transform:translateY(1px)}
+  .coinbtn .slot{
+    position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    width:56px;height:7px;background:#0d0d0d;border-radius:5px;box-shadow:inset 0 2px 3px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.08);
+  }
+  .coinbtn .label{display:block;margin-top:12px;font-size:15px;font-weight:800;letter-spacing:2px}
+  .coinbtn .coin{
+    position:absolute;top:-30px;left:50%;margin-left:-12px;width:24px;height:24px;border-radius:50%;
+    background:var(--pop);border:2px solid #D9A400;opacity:0;z-index:2;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#9a7400;
+  }
+  .coinbtn.inserting .coin{animation:coinDrop .55s cubic-bezier(.5,0,.7,1) forwards}
+  @keyframes coinDrop{
+    0%{top:-30px;opacity:1;transform:rotate(0deg) scale(1)}
+    55%{top:2px;opacity:1;transform:rotate(200deg) scale(1)}
+    100%{top:9px;opacity:0;transform:rotate(300deg) scale(.5)}
+  }
+  .out-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .out-head .cnt{font-size:13px;color:var(--sub)}
+  .out-head .cnt b{color:var(--accent)}
+  #output{
+    width:100%;min-height:200px;line-height:1.8;font-size:15px;resize:vertical;
+    background:var(--card2);border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:16px;font-family:inherit;
+  }
+  .actions{display:flex;gap:10px;margin-top:14px}
+  .actions button{
+    flex:1;padding:13px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+    border:1px solid var(--line);transition:.12s;
+  }
+  #copyBtn{background:var(--copy-bg);border-color:var(--copy-bg);color:var(--copy-txt)}
+  #copyBtn:hover{background:var(--copy-hover);border-color:var(--copy-hover)}
+  #copyBtn.done{background:var(--ink);border-color:var(--ink);color:#fff}
+  #regenBtn{background:#fff;border-color:#fff;color:var(--ink)}
+  #regenBtn:hover{background:#f0ece6;border-color:#f0ece6}
+  .empty{color:var(--sub);text-align:center;padding:38px 10px;font-size:14px;background:var(--card2);border-radius:11px}
+  .empty b{color:var(--accent)}
+  footer{text-align:center;color:var(--sub);font-size:12px;margin-top:24px;line-height:1.6}
+  .toast{
+    position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
+    background:var(--accent);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:.25s;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.18)
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="theme-toggle" id="themeToggle">
+  <button data-theme="coke" class="on">코카콜라</button>
+  <button data-theme="pepsi">펩시 제로</button>
+</div>
+<div class="wrap">
+  <div class="machine">
+    <button class="reset-btn" id="resetBtn" title="선택 초기화" aria-label="선택 초기화">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+      </svg>
+    </button>
+    <div class="machine-top">
+      <div class="brand"><span class="em">공짜 콜라</span> 자판기</div>
+      <div class="brand-sub">리뷰 쓰기 귀찮은 그대를 위한 영혼 없는 리뷰 자판기</div>
+    </div>
+
+    <div class="window">
+      <img class="can can-pepsi" src="up-pepsi.svg" alt="펩시 제로 캔">
+      <img class="can can-coke" src="up-coke.svg" alt="코카콜라 캔">
+      <div class="cap">리뷰 한 캔 뽑기<small>키워드만 넣으면 톡- 하고 나와요</small></div>
+    </div>
+
+    <div class="panel">
+      <label>카테고리</label>
+      <div class="seg" id="typeSeg">
+        <button data-type="restaurant" class="on">🍽️ 음식점</button>
+        <button data-type="cafe">☕ 카페</button>
+        <button data-type="delivery">🛵 배달</button>
+        <button data-type="product">🛍️ 상품</button>
+        <button data-type="stay">🏖️ 여행</button>
+        <button data-type="shop">💇 미용</button>
+        <button data-type="exercise">🏋️ 운동</button>
+        <button data-type="etc">✨ 기타</button>
+      </div>
+
+      <div style="margin-top:18px">
+        <label>키워드 <span class="note">(쉼표로 구분)</span></label>
+        <input id="keywords" type="text" placeholder="예: 제주도, 흑돼지, 친절, 재방문" autocomplete="off">
+      </div>
+
+      <div style="margin-top:18px">
+        <label>추천 키워드 <span class="note">(눌러서 추가)</span></label>
+        <div class="recos" id="recos"></div>
+      </div>
+
+      <div style="margin-top:18px">
+        <label>별점 <span class="note">(톤 반영)</span></label>
+        <div class="stars" id="stars">
+          <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <label>목표 길이</label>
+        <div class="len-wrap">
+          <input id="lenRange" type="range" min="100" max="500" step="50" value="150">
+          <span class="len-val" id="lenVal">약 150자</span>
+        </div>
+      </div>
+
+      <button class="coinbtn" id="genBtn">
+        <span class="slot"></span>
+        <span class="coin">10</span>
+        <span class="label">동전 투입</span>
+      </button>
+    </div>
+
+    <div class="slot-label">▼ 아래 배출구에서 리뷰를 꺼내세요 ▼</div>
+
+    <div class="tray">
+      <div class="out-head">
+        <label style="margin:0">배출된 리뷰</label>
+        <div class="cnt"><b id="charCount">0</b>자</div>
+      </div>
+      <div id="emptyState" class="empty">아직 텅 비어 있음... <b>동전을 넣어주세요</b></div>
+      <textarea id="output" style="display:none"></textarea>
+      <div class="actions" id="actions" style="display:none">
+        <button id="regenBtn">다시 뽑기</button>
+        <button id="copyBtn">복사하기</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    양심에 손 얹고, 겪은 대로 살짝 고쳐 쓰면 더 좋아요
+  </footer>
+</div>
+
+<div class="toast" id="toast">복사 완료! 이제 붙여넣기만 하면 콜라 각</div>
+
+<script>
+const state = { type:"restaurant", rating:5 };
+
+// ---- 업종별 추천 키워드 ----
+const KEYWORD_RECOMMENDATIONS = {
+  restaurant:['육즙 가득','겉바속촉','인생 맛집','친절한 응대','위생 청결','주차 편리','신선한 재료','가성비 최고','웨이팅 가치','부모님 만족','양 푸짐함','데이트 코스','재방문 100%','깔끔한 반찬','특별한 맛','고급스러운 분위기','불향 가득','야외 테라스','정갈한 상차림','가족 외식','모임 장소','친절한 사장님','자꾸 생각나는 맛','갓 지은 밥'],
+  cafe:['인스타 감성','인생 라떼','디저트 맛집','직접 로스팅','조용한 분위기','뷰 맛집','채광 좋은','사장님 친절','인테리어 예쁜','주차 넉넉','노트북 하기 좋은','정원 카페','시그니처 음료','수제 디저트','크로플 최고','힙한 분위기','원두 선택 가능','가구 예쁜','편안한 쇼파','음악 맛집','데이트 명소','조용히 책읽기 좋은','스콘 맛집','친절한 직원'],
+  stay:['탁 트인 전망','인생 사진','힐링 코스','완벽한 숙소','오션뷰','침구 보송보송','청결 상태 최고','독채','바베큐장','가성비 최고','위치 대박','조용하고 한적함','가족 여행','온수 잘 나옴','어메니티 고급','불멍 가능','재방문 200%','인근 산책로','친절한 호스트','깨끗한 욕실','인테리어 감성','기념일 여행','안락한 분위기','밤하늘 별빛'],
+  product:['내구성 훌륭','실물 깡패','빠른 배송','포장 꼼꼼','가벼운 무게','소재 보들보들','주변 추천','선물용 적합','디자인 대만족','마감 깔끔','사이즈 딱 맞음','인생 꿀템','관리 편함','유행 안 탐','유용한 기능','설명서 자세함','가죽 부드러움','탄탄한 포장','가격 대비 만족','결점 없는 퀄리티','데일리 필수품','색감 예쁨','고급스러운 패키지'],
+  delivery:['신속한 배달','따끈따끈함','포장 꼼꼼','요청사항 반영','리뷰 약속','라이더 친절','푸짐한 서비스','정성 가득','따뜻한 국물','바삭한 튀김','안전한 포장','가성비 폭발','양 정말 많음','흘림 없음','빠른 조리','가족 저녁','야식 강력 추천','또 주문할게요','완벽한 밀봉','소스 넉넉','단골 예약','신선도 유지','따뜻하게 도착','위생적인 포장'],
+  shop:['인생 스타일','세련된 감각','친절한 상담','깔끔한 샵','어울리는 컷','꼼꼼한 시술','두피 마사지','손상 최소화','네일 디자인 대만족','지속력 최고','친절한 소통','편안한 대기실','맞춤형 서비스','트렌디한 스타일','재방문 의사 100%','예약 편리','합리적인 가격','꼼꼼한 마감','섬세한 손길','모발 관리 꿀팁','만족도 최상','실력 있는 디자이너','아늑한 조명','기분전환 성공'],
+  exercise:['친절한 트레이너','체계적인 수업','쾌적한 시설','최신 기구','깨끗한 샤워실','맞춤 프로그램','재등록 의사','유연한 시간','동기부여 확실','초보자 배려','넓은 운동 공간','주차 편리','열정적인 코치','꼼꼼한 자세 교정','합리적인 가격','샤워실 청결'],
+  etc:['친절한 응대','만족스러운 결과','합리적인 가격','재이용 의사','깔끔한 시설','빠른 처리','세심한 배려','추천하고 싶은','기대 이상','편리한 이용','믿음이 가는','다시 찾고 싶은']
+};
+function currentKeywords(){
+  const inp=document.getElementById("keywords");
+  return inp.value.trim() ? inp.value.split(/[,，]/).map(s=>s.trim()).filter(Boolean) : [];
+}
+function renderRecos(){
+  const box=document.getElementById("recos");
+  box.innerHTML="";
+  (KEYWORD_RECOMMENDATIONS[state.type]||[]).forEach(w=>{
+    const b=document.createElement("button");
+    b.type="button"; b.textContent=w;
+    b.onclick=()=>toggleKeyword(w);
+    box.appendChild(b);
+  });
+  updateChipStates();
+}
+function updateChipStates(){
+  const set=new Set(currentKeywords());
+  document.querySelectorAll("#recos button").forEach(b=>b.classList.toggle("on", set.has(b.textContent)));
+}
+// 카테고리별 입력 예시(플레이스홀더)
+const PLACEHOLDERS={
+  restaurant:"예: 제주도, 흑돼지, 존맛",
+  cafe:"예: 아메리카노, 카공, 느좋",
+  delivery:"예: 닭발, 소주, 도파민",
+  product:"예: 샴푸, 물티슈, 고퀄",
+  stay:"예: 펜션, 계곡, 바베큐",
+  shop:"예: 파마, 네일아트, 당일예약",
+  exercise:"예: 헬스, 일일권, 1:1 수업",
+  etc:"예: 친절, 가성비, 추천"
+};
+function setPlaceholder(){
+  document.getElementById("keywords").placeholder=PLACEHOLDERS[state.type]||"예: 키워드를 쉼표로 넣어주세요";
+}
+function toggleKeyword(w){
+  const inp=document.getElementById("keywords");
+  const arr=currentKeywords();
+  const i=arr.indexOf(w);
+  if(i>=0) arr.splice(i,1); else arr.push(w);
+  inp.value=arr.join(", ");
+  updateChipStates();
+}
+
+// ---- UI wiring ----
+document.querySelectorAll("#typeSeg button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("#typeSeg button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); state.type=b.dataset.type;
+    document.getElementById("keywords").value="";   // 카테고리 변경 시 키워드 초기화
+    setPlaceholder();
+    renderRecos();
+  };
+});
+document.getElementById("keywords").addEventListener("input", updateChipStates);
+setPlaceholder();
+renderRecos();
+
+// ---- 테마 토글 (펩시 제로 / 코카콜라) ----
+(function(){
+  const tog=document.getElementById("themeToggle");
+  const canLabel=document.getElementById("canLabel");
+  tog.querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      tog.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      const th=b.dataset.theme;
+      document.documentElement.setAttribute("data-theme", th);
+      if(canLabel) canLabel.textContent = (th==="coke") ? "COLA" : "ZERO";
+    };
+  });
+})();
+
+const starEls=[...document.querySelectorAll("#stars span")];
+function paintStars(v){starEls.forEach(s=>s.classList.toggle("on",+s.dataset.v<=v));}
+starEls.forEach(s=>s.onclick=()=>{state.rating=+s.dataset.v;paintStars(state.rating);});
+paintStars(5);
+const lenRange=document.getElementById("lenRange"), lenVal=document.getElementById("lenVal");
+lenRange.oninput=()=>lenVal.textContent="약 "+lenRange.value+"자";
+
+// 선택 내용 초기화
+function resetSelections(){
+  document.getElementById("keywords").value="";
+  if(typeof updateChipStates==="function") updateChipStates();
+  state.rating=5; paintStars(5);
+  lenRange.value=150; lenVal.textContent="약 150자";
+  const out=document.getElementById("output");
+  out.style.display="none"; out.value="";
+  document.getElementById("actions").style.display="none";
+  document.getElementById("emptyState").style.display="";
+  document.getElementById("charCount").textContent="0";
+}
+document.getElementById("resetBtn").onclick=resetSelections;
+
+// ---- helpers ----
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// 받침(종성) 유무로 조사 선택 — 한국어 문법 자연스럽게
+function hasBatchim(word){
+  if(!word) return false;
+  const c=word[word.length-1].charCodeAt(0);
+  if(c<0xAC00||c>0xD7A3) return true; // 한글이 아니면(숫자/영어 등) 기본값
+  return (c-0xAC00)%28!==0;
+}
+function josa(word,type){
+  const b=hasBatchim(word);
+  const map={"이":b?"이":"가","은":b?"은":"는","을":b?"을":"를","와":b?"과":"와","으로":b?"으로":"로","이라는":b?"이라는":"라는"};
+  return word+(map[type]||"");
+}
+
+// 서비스/태도 키워드 → 자연스러운 표현으로 확장
+const SERVICE_EXPAND={
+  "친절":"친절하게 응대해주셔서","친절함":"친절하게 응대해주셔서","응대":"응대가 좋아서",
+  "청결":"청결하게 관리되어 있어서","깨끗":"깨끗하게 관리되어 있어서","깔끔":"깔끔하게 관리되어 있어서",
+  "정성":"정성껏 챙겨주셔서","세심":"세심하게 신경 써주셔서","신속":"신속하게 응대해주셔서",
+  "빠른":"빠르게 응대해주셔서","편안":"편안하게 대해주셔서","친근":"친근하게 대해주셔서",
+  "배려":"이것저것 배려해주셔서","꼼꼼":"꼼꼼하게 챙겨주셔서"
+};
+function isServiceWord(kw){return Object.prototype.hasOwnProperty.call(SERVICE_EXPAND,kw);}
+
+// 지역/장소 키워드 → 상품·메뉴 특징이 아니라 '장소'로 취급 (예: 제주도)
+const LOCATION=new Set([
+  "제주","제주도","서울","부산","대구","인천","광주","대전","울산","세종","경기","강원",
+  "강릉","속초","양양","춘천","경주","전주","여수","순천","통영","거제","포항","안동","담양",
+  "남해","가평","양평","파주","포천","춘천","군산","목포","부여","공주","단양","태안","보령",
+  "홍대","연남","연남동","성수","성수동","이태원","익선동","을지로","명동","종로","한남","한남동",
+  "서촌","북촌","삼청동","인사동","경리단길","가로수길","압구정","청담","신사","방배","잠실",
+  "강남","판교","일산","분당","수원","해운대","광안리","서면","전포","남포동",
+  "오사카","도쿄","후쿠오카","교토","삿포로","오키나와","방콕","다낭","나트랑","호이안","발리",
+  "파리","로마","하와이","괌","사이판","세부","보라카이","타이베이","홍콩","싱가포르","오키나와"
+]);
+function isLocation(kw){return LOCATION.has(kw);}
+
+// 시간 키워드 → 리뷰 문장에서 제외 (예: 주말, 저녁)
+const TIME=new Set([
+  "주말","평일","주중","아침","점심","저녁","밤","야식","오전","오후","새벽","낮","오늘","어제","내일",
+  "지난주","저번주","이번주","방금","조금 전","월요일","화요일","수요일","목요일","금요일","토요일","일요일"
+]);
+function isTime(kw){return TIME.has(kw);}
+
+// 키워드 없이도 쓸 수 있는 채움 문장 (길이 보정용)
+const FILLER=[
+  "있는 내내 기분이 좋아서 시간 가는 줄 몰랐어요.",
+  "여기저기 손이 많이 간 티가 나서 인상이 더 좋았어요.",
+  "괜히 유명한 데가 아니구나 싶더라고요. 오길 잘했어요.",
+  "기대하고 갔는데 그 기대를 가뿐히 넘겨줬어요.",
+  "사진보다 실물이 나아서 오히려 놀랐어요.",
+  "사소한 것까지 챙겨줘서 또 오고 싶어졌어요.",
+  "하나하나 정성이 담겨 있어서 마음까지 든든했어요.",
+  "다녀와서도 자꾸 생각나서 지인들한테 먼저 얘기했어요.",
+  "기분 좋게 즐기고 왔더니 벌써 또 가고 싶네요.",
+  "이 값 하고도 남는다 싶을 만큼 알찬 시간이었어요."
+];
+// 상품 전용 채움 문장 (방문 표현 없이 '구매/사용' 톤)
+const PRODUCT_FILLER=[
+  "쓰면 쓸수록 만족스러워서 잘 샀다 싶어요.",
+  "여기저기 신경 쓴 티가 나서 더 마음에 들었어요.",
+  "괜히 후기가 좋은 게 아니구나 싶더라고요.",
+  "기대하고 샀는데 그 기대를 가뿐히 넘겨줬어요.",
+  "사진보다 실물이 나아서 오히려 놀랐어요.",
+  "사소한 부분까지 챙긴 게 느껴져서 또 사고 싶어졌어요.",
+  "하나하나 정성이 담겨 있어서 믿음이 갔어요.",
+  "받고 나서도 자꾸 눈이 가서 지인들한테 먼저 얘기했어요.",
+  "쓸 때마다 기분이 좋아서 벌써 재구매를 고민 중이에요.",
+  "이 값 하고도 남는다 싶을 만큼 알찬 구성이었어요."
+];
+
+// ---- content banks by type ----
+const BANK = {
+  restaurant:{
+    open:[
+      "예전부터 가보고 싶었던 곳인데 드디어 다녀왔고, 기대 이상이라 후기를 남기게 됐어요.",
+      "가족과 함께 다녀왔는데, 오랜만에 제대로 된 한 끼를 먹은 기분이라 기록으로 남겨둡니다.",
+      "웨이팅이 있다길래 반신반의하며 갔는데, 먹어보고 나서 왜 줄을 서는지 바로 납득했어요.",
+      "특별한 날 실패하고 싶지 않아 고르고 골라 예약했는데, 결과적으로 완벽한 선택이었습니다.",
+      "지인들과 한잔하러 들렀는데, 분위기도 안주도 딱 취향이라 시간 가는 줄 몰랐어요."
+    ],
+    openLoc:[
+      "{loc} 갔다가 뭘 먹을지 한참 고민하다 들어왔는데, 결론부터 말하면 정말 잘 왔어요.",
+      "{loc} 여행 겸 맛집을 찾다가 들르게 된 곳인데, 첫인상부터 마음에 쏙 들었습니다.",
+      "{loc}에서 실패 없는 한 끼를 먹고 싶어 검색 끝에 찾아갔는데, 대만족이었어요."
+    ],
+    body:[
+      "우선 {kw:이} 이 집의 진짜 매력이었어요. 겉만 그럴싸한 게 아니라 한 입 먹는 순간 왜 유명한지 바로 알겠더라고요.",
+      "{kw}, 사진으로 보던 것보다 실물이 훨씬 좋았어요. 정성이 들어간 티가 나서 먹는 내내 기분이 좋았습니다.",
+      "특히 {kw:은} 두고두고 생각날 것 같아요. 흔한 맛이 아니라서 일부러라도 다시 찾고 싶습니다.",
+      "{kw}만큼은 확실히 인상적이었어요. 기본기가 탄탄해서 믿고 먹을 수 있었습니다.",
+      "{kw} 덕분에 분위기까지 살아나서, 음식뿐 아니라 그 자리 전체가 오래 기억에 남을 것 같아요.",
+      "솔직히 {kw:은} 어디 내놔도 빠지지 않을 수준이라, 먹는 내내 감탄했어요.",
+      "{kw:이} 입맛에 딱 맞아서, 함께 간 일행들도 젓가락을 멈추질 못했어요.",
+      "{kw} 하나만 봐도 사장님 내공이 느껴져서, 다른 메뉴까지 기대하게 됐어요.",
+      "{kw}, 이건 진짜 다시 먹으러 올 이유가 되겠더라고요. 계속 생각날 맛이었어요."
+    ],
+    service:[
+      "직원분들이 {svc} 편하게 식사할 수 있었어요. 바쁜 시간대였는데도 세심해서 대접받는 기분이 들었습니다.",
+      "무엇보다 {svc} 또 오고 싶어졌어요. 사소한 요청에도 웃으며 챙겨주셔서 감동이었습니다.",
+      "사장님이 {svc} 단골이 왜 많은지 알 것 같았어요. 사람 냄새 나는 응대가 특히 좋았습니다."
+    ],
+    close:[
+      "가격을 생각하면 오히려 만족스러워서 주변에도 자신 있게 추천할 것 같아요. 다음엔 다른 메뉴도 도전해보려 합니다.",
+      "재방문 의사 백 퍼센트입니다. 근처에 갈 일이 있다면 무조건 다시 들를 거예요. 좋은 시간 감사합니다!",
+      "흠잡을 데가 거의 없어서 오랜만에 별점을 후하게 주게 됐네요. 사장님, 오래오래 장사하세요!",
+      "소중한 사람 데려오고 싶은 곳으로 저장해둡니다. 이 동네 오면 무조건 코스에 넣을 거예요."
+    ]
+  },
+  cafe:{
+    open:[
+      "분위기 좋은 카페를 늘 찾아다니는 편인데, 이곳은 오래 기억에 남을 것 같아 후기를 남깁니다.",
+      "SNS에서 보고 궁금했던 곳을 드디어 다녀왔어요. 사진보다 실제가 더 좋아서 기분 좋게 시간을 보냈습니다.",
+      "카페 투어를 좋아하는 편인데, 오랜만에 재방문 리스트에 바로 올린 곳이라 후기를 남깁니다.",
+      "약속 장소로 잡았다가 예상 못 한 만족감을 얻고 돌아왔어요. 공간이 주는 여유가 참 좋았습니다."
+    ],
+    openLoc:[
+      "{loc} 쪽에서 잠깐 쉬어갈 곳을 찾다가 우연히 들어왔는데, 생각보다 훨씬 마음에 드는 카페였어요.",
+      "{loc} 나들이 갔다가 들른 카페인데, 여행 기분을 제대로 살려줘서 기억에 남아요."
+    ],
+    body:[
+      "{kw:이} 정말 좋았어요. 커피 한 잔, 디저트 하나에도 신경 쓴 티가 나서 앉자마자 만족스러웠습니다.",
+      "{kw}, 사진 찍기에도 좋고 실제로도 훌륭해서 머무는 내내 눈과 입이 즐거웠어요.",
+      "특히 {kw} 덕분에 오래 앉아 있고 싶어지는 공간이었어요. 대화하기에도, 혼자 시간 보내기에도 딱이었습니다.",
+      "{kw} 퀄리티가 기대 이상이라, 근처를 지날 때마다 생각날 것 같아요.",
+      "{kw:을} 이렇게 잘 챙긴 카페는 오랜만이라, 앉자마자 기분이 좋아졌어요.",
+      "{kw:이} 취향을 제대로 저격해서, 사진만 몇 장을 찍었는지 모르겠어요.",
+      "{kw} 하나로도 다시 올 이유가 충분한 곳이라, 벌써 다음이 기다려집니다.",
+      "번잡한 곳과 달리 {kw} 덕분에 온전히 쉬어가는 기분이 들었어요."
+    ],
+    service:[
+      "사장님이 {svc} 더 오래 머물고 싶었어요. 편안한 응대 덕분에 마음까지 여유로워졌습니다.",
+      "직원분들이 {svc} 혼자 와도 전혀 어색하지 않았고, 오히려 힐링이 되는 시간이었어요.",
+      "{svc} 작은 배려들이 곳곳에서 느껴져서, 다음에도 편하게 찾고 싶어졌어요."
+    ],
+    close:[
+      "동네에 이런 카페 하나쯤 있으면 참 좋겠다 싶었어요. 다음엔 친구들 데리고 다시 오려고요. 강력 추천합니다!",
+      "가격 대비 만족스러워서 또 올 것 같아요. 좋은 공간 만들어주셔서 감사해요.",
+      "오랜만에 편하게 쉬다 갑니다. 별점 아낌없이 드려요!",
+      "조용히 시간 보내고 싶은 분들께 딱이에요. 단골집 리스트에 바로 저장했습니다."
+    ]
+  },
+  delivery:{
+    open:[
+      "배달로 시켜 먹었는데 생각보다 훨씬 만족스러워서 후기를 남겨요. 이 집, 이거 하나는 확실합니다.",
+      "동네에서 배달 맛집을 찾다가 주문했는데, 첫 주문부터 단골 예약이라 기록으로 남겨둡니다.",
+      "야식으로 시켰다가 제대로 만족한 집이에요. 재주문 각 나와서 솔직하게 적어봅니다.",
+      "여러 집을 두고 고민하다 여기로 주문했는데, 결과적으로 아주 잘 골랐다 싶었어요."
+    ],
+    body:[
+      "우선 {kw:이} 정말 좋았어요. 배달인데도 매장에서 먹는 것 못지않아서 시키길 잘했다 싶었습니다.",
+      "{kw}, 사진보다 실물이 훨씬 좋았어요. 포장을 열자마자 기분이 좋아졌습니다.",
+      "특히 {kw:은} 또 시키고 싶을 만큼 인상적이었어요. 이 동네 배달 중엔 손에 꼽을 것 같아요.",
+      "{kw}만큼은 확실히 믿고 시킬 수 있겠더라고요. 양도 가격도 아쉬움이 없었습니다.",
+      "{kw} 덕분에 배달 음식 특유의 아쉬움 없이 제대로 한 끼 잘 먹었어요.",
+      "{kw}, 이렇게 신경 써서 보내주시다니 포장 상태까지 완벽했습니다.",
+      "{kw:이} 생각보다 훨씬 알차서, 다음에도 망설임 없이 또 시킬 것 같아요."
+    ],
+    service:[
+      "사장님이 {svc} 배달인데도 대접받는 기분이 들었어요. 서비스까지 챙겨주셔서 감동이었습니다.",
+      "{svc} 요청사항도 꼼꼼히 반영해주셔서 기분 좋게 잘 먹었어요.",
+      "포장에 {svc} 국물 하나 새지 않고 따뜻하게 도착했어요. 세심함이 느껴졌습니다."
+    ],
+    close:[
+      "재주문 의사 백 퍼센트입니다. 야식 생각날 때마다 여기로 시킬 것 같아요. 잘 먹었습니다!",
+      "배달비가 아깝지 않은 집이에요. 주변에도 자신 있게 추천하려고요. 사장님 번창하세요!",
+      "이 정도면 단골 확정입니다. 다음엔 다른 메뉴도 시켜보려고요. 감사합니다!"
+    ]
+  },
+  product:{
+    open:[
+      "고민 끝에 구매했는데 생각보다 훨씬 만족스러워서 후기를 남겨요. 이거, 사길 잘했습니다.",
+      "여러 상품을 비교하다 이걸로 골랐는데, 받아보고 나서 잘 골랐다 싶었어요.",
+      "장바구니에 담아두고 한참 망설이다 주문했는데, 결론부터 말하면 대만족입니다.",
+      "후기가 좋길래 반신반의하며 샀는데, 직접 써보니 왜 평이 좋은지 바로 알겠더라고요."
+    ],
+    body:[
+      "우선 {kw:이} 정말 만족스러웠어요. 가격을 생각하면 이 정도 퀄리티는 기대 이상이었습니다.",
+      "{kw}, 상세페이지 사진보다 실물이 훨씬 좋았어요. 받자마자 기분이 좋아졌습니다.",
+      "특히 {kw:은} 두고두고 잘 썼다 싶을 만큼 마음에 들어요. 재구매 의사가 생길 정도였습니다.",
+      "{kw}만큼은 확실히 믿고 살 수 있겠더라고요. 마감이나 디테일이 꼼꼼했습니다.",
+      "{kw} 덕분에 실제로 써봐도 만족스러웠어요. 사진과 달라 실망하는 일도 전혀 없었습니다.",
+      "{kw:을} 중요하게 보는 편인데, 이 제품은 그 기준을 확실히 충족했어요.",
+      "{kw:이} 특히 취향에 잘 맞아서, 받자마자 잘 산 물건이라는 확신이 들었어요."
+    ],
+    service:[
+      "판매자분이 {svc} 문의에도 빠르게 답해주셔서 믿음이 갔어요. CS까지 꼼꼼해서 안심하고 구매했습니다.",
+      "{svc} 포장도 꼼꼼해서 파손 없이 잘 도착했어요. 배송까지 신경 쓴 게 느껴졌습니다.",
+      "{svc} 요청사항도 잘 반영해주셔서 기분 좋게 받았습니다."
+    ],
+    close:[
+      "재구매 의사 확실합니다. 필요하신 분들께 자신 있게 추천드려요. 잘 쓰겠습니다!",
+      "이 가격에 이 정도면 무조건 사는 게 이득이에요. 주변에도 추천하려고요.",
+      "전반적으로 만족스러워서 별점 후하게 남겨요. 좋은 상품 감사합니다!"
+    ]
+  },
+  stay:{
+    open:[
+      "여러 후기를 비교하다 다녀왔는데, 실제로 가보니 기대 이상이라 저도 후기를 남깁니다.",
+      "여행지에서 꼭 들러보고 싶었던 곳인데, 직접 와보니 사진보다 훨씬 좋아서 후기를 남겨요.",
+      "일정에 넣을까 말까 고민하다 들렀는데, 안 왔으면 후회할 뻔했다 싶을 만큼 좋았어요.",
+      "쉬어가고 싶어 즉흥적으로 찾은 곳인데, 기대 없이 갔다가 제대로 만족하고 돌아왔습니다."
+    ],
+    openLoc:[
+      "{loc} 여행을 준비하면서 꽤 공들여 골랐는데, 결과적으로 이곳을 선택하길 정말 잘했어요.",
+      "{loc}에서의 시간을 편안하게 보내고 싶어 고른 곳인데, 만족스러운 선택이었습니다.",
+      "{loc} 하면 여기부터 떠오를 만큼, 여행 내내 기분 좋게 머물다 왔어요."
+    ],
+    body:[
+      "우선 {kw:이} 정말 좋았어요. 사진에서 본 것과 다르지 않아서, 도착하자마자 마음이 놓였습니다.",
+      "{kw}, 특히 신경 쓴 게 느껴졌어요. 덕분에 여행의 피로가 싹 풀리는 기분이었습니다.",
+      "{kw} 덕분에 머무는 내내 편안했어요. 다음 여행 때도 이런 곳이면 좋겠다 싶었습니다.",
+      "{kw:은} 기대 이상이라, 함께 간 일행들도 모두 만족스러워했어요.",
+      "{kw:을} 중요하게 생각하는 분이라면 여기, 후회 없으실 거예요.",
+      "{kw} 하나만으로도 일부러 찾아올 가치가 충분하다고 느꼈어요.",
+      "{kw:이} 특히 기억에 남아서, 사진첩을 넘길 때마다 다시 가고 싶어져요.",
+      "{kw} 덕분에 여행 전체가 훨씬 즐거워졌어요. 신의 한 수였습니다."
+    ],
+    service:[
+      "호스트분이 {svc} 처음부터 끝까지 전혀 불편함이 없었어요. 세심한 안내 덕분에 편하게 다녀왔습니다.",
+      "{svc} 낯선 곳에서도 마음 편히 시간을 보낼 수 있었어요.",
+      "{svc} 필요한 정보를 미리 챙겨주셔서, 헤매지 않고 알차게 즐길 수 있었습니다."
+    ],
+    close:[
+      "또 갈 일이 생기면 망설임 없이 다시 찾을 것 같아요. 좋은 추억 만들어주셔서 감사합니다!",
+      "가격 대비 아주 만족스러워서 주변에도 추천하려고요. 재방문 의사 확실합니다.",
+      "덕분에 여행이 한층 더 즐거웠어요. 별점 가득 드립니다!",
+      "다음 여행 리스트에도 미리 저장해뒀어요. 소중한 사람과 다시 오고 싶은 곳입니다."
+    ]
+  },
+  shop:{
+    open:[
+      "관리를 제대로 받고 싶어 여러 곳을 비교하다 예약했는데, 다녀와보니 잘 골랐다 싶었어요.",
+      "한 번쯤 가보고 싶었던 곳을 드디어 다녀왔는데, 여러모로 인상 깊어서 기록으로 남겨둡니다.",
+      "지인 추천으로 방문했는데, 왜 추천했는지 받아보고 바로 이해했어요. 만족스러운 방문이었습니다.",
+      "기분 전환도 할 겸 예약했는데, 결과부터 케어까지 마음에 들어 후기를 남깁니다."
+    ],
+    body:[
+      "우선 {kw:이} 정말 만족스러웠어요. 처음부터 꼼꼼하게 봐주셔서 안심하고 맡길 수 있었습니다.",
+      "{kw}, 확실히 차이가 느껴졌어요. 괜히 입소문 난 게 아니구나 싶었습니다.",
+      "{kw} 덕분에 결과가 아주 마음에 들었고, 다음에 또 받으러 오고 싶어졌어요.",
+      "{kw:은} 기대 이상이라, 끝나고 나서도 계속 기분이 좋았습니다.",
+      "{kw:을} 중요하게 여기는 편인데, 여기는 그 기준을 확실히 충족했어요.",
+      "{kw} 하나는 정말 제대로라, 받는 내내 편안했습니다.",
+      "{kw:이} 특히 세심해서, 내 상태를 제대로 봐준다는 느낌을 받았어요.",
+      "{kw} 덕분에 결과는 물론이고 받는 과정까지 만족스러웠습니다."
+    ],
+    service:[
+      "선생님이 {svc} 부담 없이 편하게 받을 수 있었어요. 필요한 걸 꼼꼼히 챙겨주셔서 감사했습니다.",
+      "{svc} 처음 방문인데도 긴장하지 않고 편하게 시간을 보낼 수 있었습니다.",
+      "{svc} 무리하게 권하지 않고 내게 맞는 걸 짚어주셔서 신뢰가 갔어요."
+    ],
+    close:[
+      "재방문 의사 확실합니다. 관리 필요할 때마다 여기로 오려고요. 추천합니다!",
+      "전반적으로 만족스러워서 별점 후하게 남겨요. 좋은 케어 감사합니다.",
+      "주변에도 자신 있게 추천할 수 있을 것 같아요. 오래오래 잘 되시길 바랍니다!",
+      "믿고 맡길 곳을 찾은 것 같아 든든해요. 단골로 다니려고 벌써 다음 예약을 잡았습니다."
+    ]
+  },
+  exercise:{
+    open:[
+      "운동을 꾸준히 해보려고 여러 곳을 알아보다 등록했는데, 다녀보니 잘 왔다 싶었어요.",
+      "체험 삼아 가봤다가 바로 등록하게 된 곳이에요. 다니면서 느낀 점을 솔직하게 남깁니다.",
+      "작심삼일이 걱정이었는데, 여기 다니면서 운동이 재미있어져서 후기를 남겨봐요.",
+      "집 근처에 이런 곳이 있었으면 하던 딱 그런 곳이라, 다녀보고 바로 후기를 남깁니다."
+    ],
+    body:[
+      "우선 {kw:이} 정말 마음에 들었어요. 덕분에 운동하러 가는 발걸음이 한결 가벼워졌습니다.",
+      "{kw}, 생각보다 훨씬 좋아서 다닐 맛이 나더라고요. 꾸준히 나가게 되는 이유가 됐어요.",
+      "특히 {kw:은} 확실히 차이를 만들어줬어요. 몸이 달라지는 게 느껴져서 동기부여가 됐습니다.",
+      "{kw}만큼은 어디에 비해도 빠지지 않겠더라고요. 제대로 관리받는 느낌이었어요.",
+      "{kw} 덕분에 운동이 부담이 아니라 즐거움이 됐어요. 이런 경험은 처음이었습니다.",
+      "{kw:을} 중요하게 보는 편인데, 여기는 그 기준을 확실히 채워줬어요.",
+      "{kw:이} 특히 초보인 저한테도 잘 맞아서, 무리 없이 따라갈 수 있었어요."
+    ],
+    service:[
+      "선생님이 {svc} 운동 내내 편하게 배울 수 있었어요. 자세 하나하나 봐주셔서 믿음이 갔습니다.",
+      "{svc} 처음이라 걱정했는데 긴장하지 않고 즐겁게 운동할 수 있었어요.",
+      "{svc} 내 페이스에 맞춰 이끌어주셔서, 무리 없이 꾸준히 다닐 수 있었습니다."
+    ],
+    close:[
+      "재등록 의사 확실합니다. 운동 고민 중이신 분들께 자신 있게 추천드려요. 계속 다닐게요!",
+      "이 정도면 값을 제대로 한다 싶어요. 오랜만에 운동에 재미를 붙였습니다. 강력 추천!",
+      "전반적으로 만족스러워서 별점 후하게 남겨요. 덕분에 건강해지는 기분입니다."
+    ]
+  },
+  etc:{
+    open:[
+      "우연히 접하게 됐는데 생각보다 훨씬 만족스러워서 후기를 남겨요.",
+      "고민하다 이용하게 된 곳인데, 결과적으로 잘 골랐다 싶어 기록으로 남깁니다.",
+      "기대 반 걱정 반으로 이용했는데, 예상보다 좋아서 솔직하게 적어봐요.",
+      "한 번쯤 경험해보고 싶었는데, 직접 겪어보니 여러모로 인상 깊었습니다."
+    ],
+    body:[
+      "우선 {kw:이} 정말 좋았어요. 세심하게 챙겨진 느낌이라 이용하는 내내 만족스러웠습니다.",
+      "{kw}, 기대보다 훨씬 좋아서 다시 찾고 싶어졌어요. 괜히 좋은 평이 있는 게 아니더라고요.",
+      "특히 {kw:은} 확실히 인상적이었어요. 두고두고 기억에 남을 것 같습니다.",
+      "{kw}만큼은 어디에 비해도 빠지지 않겠더라고요. 믿고 이용할 만했어요.",
+      "{kw} 덕분에 이용 내내 훨씬 만족스러웠어요. 오길 잘했다 싶었습니다.",
+      "{kw:을} 중요하게 보는 편인데, 여기는 그 기준을 확실히 충족했어요.",
+      "{kw:이} 특히 마음에 들어서, 다음에도 망설임 없이 또 이용할 것 같아요."
+    ],
+    service:[
+      "담당자분이 {svc} 처음부터 끝까지 편하게 이용할 수 있었어요. 세심함이 느껴졌습니다.",
+      "{svc} 필요한 부분을 알아서 챙겨주셔서 신뢰가 갔어요.",
+      "{svc} 부담 없이 편하게 이용할 수 있어서 좋았습니다."
+    ],
+    close:[
+      "재이용 의사 확실합니다. 필요하신 분들께 자신 있게 추천드려요!",
+      "전반적으로 만족스러워서 별점 후하게 남겨요. 좋은 경험 감사합니다.",
+      "주변에도 추천할 만하다고 느꼈어요. 다음에도 또 이용하려고요!"
+    ]
+  }
+};
+
+// 여러 단어로 된 서술형 키워드(예: '육즙 가득', '인생 맛집')에 어울리는 문장
+const PHRASE_BODY=[
+  "무엇보다 {kw}, 그게 제일 마음에 들었어요. 후기에서 본 그대로였습니다.",
+  "한마디로 {kw}, 딱 그 말이 어울리는 곳이었어요.",
+  "{kw:이라는} 말이 절로 나올 만큼 좋았어요. 기대 이상이었습니다.",
+  "{kw} 덕분에 있는 내내 기분이 좋았어요. 여기 확실한 강점이더라고요.",
+  "{kw}, 이건 확실히 인정이에요. 두고두고 생각날 것 같아요.",
+  "{kw} 하나만으로도 다시 찾을 이유가 충분했어요."
+];
+
+// 추천 키워드별 전용 문장 (각 2~3개 변형 중 랜덤 선택)
+const KEYWORD_SENTENCES={
+  // 음식점
+  "육즙 가득":["한 입 베어 물면 육즙이 쫙 터져요. 씹을 때마다 촉촉해서 계속 손이 갔어요.","고기에서 육즙이 가득 배어 나와서 입안에서 살살 녹더라고요."],
+  "겉바속촉":["겉은 바삭한데 속은 촉촉해서 그 대비가 진짜 예술이었어요.","한 입 물면 겉바속촉이 딱 느껴져요. 튀김옷부터 다르더라고요."],
+  "인생 맛집":["과장 안 보태고 인생 맛집 만난 기분이에요. 두고두고 생각날 것 같아요.","여기 바로 제 인생 맛집 리스트에 들어갔어요. 그만큼 만족스러웠습니다."],
+  "친절한 응대":["직원분들이 어찌나 친절하신지 있는 내내 기분이 좋았어요.","사소한 부탁에도 웃으며 응대해주셔서 대접받는 느낌이었어요."],
+  "위생 청결":["구석구석 깨끗해서 믿고 먹을 수 있었어요.","위생 상태가 눈에 보일 만큼 깔끔해서 안심됐어요."],
+  "주차 편리":["주차가 편해서 차 가지고 가기 부담 없었어요.","주차 공간이 넉넉해서 헤맬 일이 없더라고요."],
+  "신선한 재료":["재료가 딱 봐도 신선해서 맛이 살아있더라고요.","신선한 재료를 써서 그런지 잡내 하나 없이 깔끔했어요."],
+  "가성비 최고":["이 가격에 이 퀄리티라니, 가성비가 정말 최고예요.","양이며 맛이며 가격 생각하면 남는 장사 시켜주는 느낌이에요."],
+  "웨이팅 가치":["웨이팅이 있었지만 먹어보니 기다린 보람이 있더라고요.","줄 설 만해요. 기다린 시간이 하나도 안 아까웠어요."],
+  "부모님 만족":["부모님 모시고 갔는데 두 분 다 아주 좋아하셨어요.","어른 입맛에도 딱이라 부모님이 특히 만족하셨어요."],
+  "양 푸짐함":["양이 푸짐해서 배부르게 먹고 나왔어요.","이 양이면 든든하죠. 남길 정도로 넉넉하게 나왔어요."],
+  "데이트 코스":["분위기가 좋아서 데이트 코스로 딱이에요.","둘이 오붓하게 시간 보내기 좋아서 데이트하기 좋았어요."],
+  "재방문 100%":["두말할 것 없이 재방문 100%예요. 또 올 거예요.","무조건 다시 옵니다. 재방문 의사 백 퍼센트예요."],
+  "깔끔한 반찬":["반찬 하나하나가 깔끔하고 정갈해서 손이 계속 갔어요.","기본 반찬까지 신경 쓴 티가 나서 더 좋았어요."],
+  "특별한 맛":["어디서도 못 먹어본 특별한 맛이라 계속 생각나요.","흔한 맛이 아니라 여기서만 느낄 수 있는 맛이었어요."],
+  "고급스러운 분위기":["분위기가 고급스러워서 특별한 날 오기 딱 좋아요.","인테리어가 고급스러워서 대접받는 기분이 들었어요."],
+  "불향 가득":["불향이 제대로 배어 있어서 한 입 먹자마자 반했어요.","불향이 가득해서 풍미가 확 살더라고요."],
+  "야외 테라스":["야외 테라스가 있어서 날 좋을 때 앉아 있기 딱이에요.","테라스 자리에서 먹으니 분위기가 두 배로 좋았어요."],
+  "정갈한 상차림":["상차림이 정갈해서 눈으로 먼저 배부른 느낌이었어요.","한 상 딱 차려 나오는데 정성이 그대로 보이더라고요."],
+  "가족 외식":["온 가족이 다 같이 만족한, 가족 외식으로 딱인 곳이에요.","아이부터 어른까지 다 좋아해서 가족 외식하기 좋았어요."],
+  "모임 장소":["자리가 넉넉해서 여럿이 모이기 좋은 곳이에요.","단체로 가기 좋아서 모임 장소로 자주 찾게 될 것 같아요."],
+  "친절한 사장님":["사장님이 어찌나 친절하신지 단골 되고 싶어졌어요.","사장님 인심이 좋아서 기분 좋게 먹고 왔어요."],
+  "자꾸 생각나는 맛":["집에 와서도 그 맛이 자꾸 생각나서 또 예약했어요.","한 번 먹고 나니 계속 생각나는, 중독성 있는 맛이었어요."],
+  "갓 지은 밥":["갓 지은 밥이 윤기가 좔좔 흘러서 밥만 먹어도 맛있었어요.","따끈하게 갓 지은 밥이 나와서 반찬이 다 필요 없더라고요."],
+  // 카페
+  "인스타 감성":["공간이 온통 인스타 감성이라 사진만 한참 찍었어요.","어디를 찍어도 그림이라 감성 사진 건지기 딱이에요."],
+  "인생 라떼":["라떼 한 모금에 반했어요. 여기가 제 인생 라떼예요.","고소하고 부드러운 게 지금까지 마신 라떼 중 최고였어요."],
+  "디저트 맛집":["디저트가 하나같이 맛있어서 고르는 게 힘들 정도였어요.","여기 디저트는 실패가 없어요. 뭘 시켜도 맛있더라고요."],
+  "직접 로스팅":["직접 로스팅한 원두라 향이 확실히 다르더라고요.","커피에서 갓 볶은 향이 살아있어서 한 잔이 특별했어요."],
+  "조용한 분위기":["조용해서 대화 나누기에도, 혼자 있기에도 좋았어요.","시끄럽지 않아서 마음 편히 오래 앉아 있었어요."],
+  "뷰 맛집":["창밖 뷰가 좋아서 커피보다 풍경에 더 취했어요.","자리에 앉자마자 보이는 뷰에 감탄했어요. 뷰 맛집이에요."],
+  "채광 좋은":["햇살이 잘 들어와서 낮에 앉아 있기 정말 좋았어요.","채광이 좋아서 공간 전체가 화사하고 따뜻했어요."],
+  "사장님 친절":["사장님이 친절하셔서 더 오래 머물고 싶었어요.","편하게 대해주셔서 마음까지 여유로워졌어요."],
+  "인테리어 예쁜":["인테리어가 예뻐서 들어서자마자 기분이 좋아졌어요.","소품 하나하나 취향이라 구경하는 재미가 있었어요."],
+  "주차 넉넉":["주차 공간이 넉넉해서 차 가지고 가기 편했어요.","주차 걱정 없이 편하게 다녀올 수 있었어요."],
+  "노트북 하기 좋은":["콘센트도 많고 조용해서 노트북 작업하기 딱이었어요.","오래 앉아 작업하기 좋아서 카공하기 좋았어요."],
+  "정원 카페":["정원이 예뻐서 초록초록 구경하며 쉬다 왔어요.","야외 정원 자리가 있어서 산책하듯 편하게 즐겼어요."],
+  "시그니처 음료":["시그니처 음료가 여기서만 맛볼 수 있는 맛이라 특별했어요.","대표 메뉴 하나는 꼭 드셔보세요. 괜히 시그니처가 아니에요."],
+  "수제 디저트":["직접 만든 디저트라 그런지 정성이 느껴졌어요.","수제 디저트가 달지 않고 딱 좋아서 계속 손이 갔어요."],
+  "크로플 최고":["크로플이 겉은 바삭 속은 촉촉해서 진짜 최고였어요.","여기 크로플 먹으러 또 올 것 같아요. 그만큼 맛있었어요."],
+  "힙한 분위기":["요즘 감성 제대로 살린 힙한 분위기라 구경만 해도 좋았어요.","공간이 트렌디해서 있는 것만으로 기분이 살더라고요."],
+  "원두 선택 가능":["원두를 골라 마실 수 있어서 취향대로 즐겼어요.","여러 원두 중에 고를 수 있어서 커피 좋아하는 분께 좋아요."],
+  "가구 예쁜":["가구가 하나같이 예뻐서 앉는 자리마다 그림이었어요.","의자며 테이블이며 감각적이라 눈이 즐거웠어요."],
+  "편안한 쇼파":["쇼파가 편해서 한번 앉으니 일어나기 싫더라고요.","푹신한 쇼파 자리에서 편하게 쉬다 왔어요."],
+  "음악 맛집":["틀어주는 음악이 취향 저격이라 분위기가 두 배로 좋았어요.","선곡이 좋아서 머무는 내내 기분이 좋았어요."],
+  "데이트 명소":["분위기가 좋아서 데이트하기 딱이에요.","둘이 오기 좋아서 데이트 명소로 손색없었어요."],
+  "조용히 책읽기 좋은":["조용해서 책 한 권 들고 오래 앉아 있기 좋았어요.","방해받지 않고 책 읽기 딱 좋은 분위기였어요."],
+  "스콘 맛집":["스콘이 겉바속촉이라 커피랑 같이 먹으니 최고였어요.","여기 스콘은 꼭 드셔보세요. 결이 살아있어요."],
+  "친절한 직원":["직원분들이 친절해서 혼자 가도 편했어요.","응대가 다정해서 기분 좋게 쉬다 왔어요."],
+  // 여행
+  "탁 트인 전망":["창을 여니 탁 트인 전망이 쫙 펼쳐져서 가슴이 시원했어요.","전망이 시원하게 트여 있어서 멍하니 바라만 봐도 힐링됐어요."],
+  "인생 사진":["어디서 찍어도 인생 사진이 나와서 카메라를 못 놨어요.","풍경이 예뻐서 인생 사진 여러 장 건졌어요."],
+  "힐링 코스":["복잡한 일 다 잊고 제대로 힐링하고 왔어요.","조용히 쉬기 딱이라 힐링 코스로 완벽했어요."],
+  "완벽한 숙소":["뭐 하나 아쉬운 게 없는, 말 그대로 완벽한 숙소였어요.","기대 이상이라 다음에도 여기로 예약하려고요."],
+  "오션뷰":["창밖으로 바다가 쫙 보여서 오션뷰 하나로 다 용서됐어요.","눈뜨자마자 보이는 바다에 매일 아침이 특별했어요."],
+  "침구 보송보송":["침구가 보송보송해서 눕자마자 스르륵 잠들었어요.","이불이 깨끗하고 포근해서 푹 잤어요."],
+  "청결 상태 최고":["구석까지 깨끗해서 청결 하나는 최고였어요.","티끌 하나 없이 관리돼 있어서 마음 편히 지냈어요."],
+  "독채":["독채라 눈치 볼 일 없이 오붓하게 쉬다 왔어요.","우리끼리 통째로 쓰니 프라이빗해서 좋았어요."],
+  "바베큐장":["바베큐장이 잘 되어 있어서 저녁을 제대로 즐겼어요.","고기 구워 먹기 딱 좋게 되어 있어서 분위기 최고였어요."],
+  "위치 대박":["위치가 좋아서 어디 다니든 편했어요.","주요 명소가 가까워서 동선이 정말 편했어요."],
+  "조용하고 한적함":["한적해서 방해받지 않고 푹 쉬다 왔어요.","조용한 동네라 마음까지 차분해졌어요."],
+  "가족 여행":["온 가족이 편하게 지내다 온, 가족 여행으로 딱인 곳이에요.","아이들도 어른도 다 만족해서 가족 여행지로 강추해요."],
+  "온수 잘 나옴":["온수가 콸콸 잘 나와서 씻을 때 쾌적했어요.","물 온도 걱정 없이 따뜻하게 씻을 수 있어 좋았어요."],
+  "어메니티 고급":["어메니티가 고급이라 챙겨온 게 무색할 정도였어요.","비치된 용품이 좋아서 몸만 가도 될 정도였어요."],
+  "불멍 가능":["밤에 불멍하니 하루 피로가 싹 풀리더라고요.","불멍하며 도란도란 이야기 나누기 딱 좋았어요."],
+  "재방문 200%":["또 올 거예요. 재방문 의사 200%입니다.","다음 여행도 여기로 정했어요. 그만큼 좋았어요."],
+  "인근 산책로":["근처 산책로가 예뻐서 아침저녁으로 걷기 좋았어요.","걷기 좋은 길이 가까워서 산책하는 재미가 있었어요."],
+  "친절한 호스트":["호스트분이 친절해서 낯선 곳인데도 마음이 놓였어요.","필요한 걸 미리 챙겨주셔서 편하게 지냈어요."],
+  "깨끗한 욕실":["욕실이 반짝반짝해서 쓰는 내내 기분이 좋았어요.","물때 하나 없이 깨끗해서 안심하고 씻었어요."],
+  "인테리어 감성":["인테리어가 감성적이라 사진 찍는 재미가 쏠쏠했어요.","공간이 취향 저격이라 머무는 것만으로 힐링됐어요."],
+  "기념일 여행":["특별한 날 오기 딱이라 기념일 여행으로 완벽했어요.","분위기가 좋아서 기념일 보내기 좋았어요."],
+  "안락한 분위기":["집처럼 아늑해서 몸도 마음도 편히 쉬다 왔어요.","포근한 분위기라 도착하자마자 긴장이 풀렸어요."],
+  "밤하늘 별빛":["밤에 별이 쏟아질 듯 보여서 그 자체로 낭만이었어요.","도심에선 못 보던 별빛에 한참을 올려다봤어요."],
+  // 상품
+  "내구성 훌륭":["몇 번을 써도 끄떡없어서 내구성 하나는 확실해요.","튼튼하게 잘 만들어져서 오래 쓸 것 같아요."],
+  "실물 깡패":["사진은 거들 뿐이에요. 실물이 훨씬 예뻐서 받자마자 감탄했어요.","완전 실물파예요. 화면으로 본 것보다 실제가 몇 배는 낫더라고요."],
+  "빠른 배송":["주문하자마자 온 것처럼 배송이 빨라서 놀랐어요.","배송이 번개같이 와서 기다릴 틈도 없었어요."],
+  "포장 꼼꼼":["포장이 꼼꼼해서 파손 없이 안전하게 도착했어요.","겹겹이 잘 싸여 와서 신경 쓴 티가 나더라고요."],
+  "가벼운 무게":["생각보다 가벼워서 들고 다니기 부담이 없어요.","무게가 가벼워서 하루 종일 써도 힘들지 않았어요."],
+  "소재 보들보들":["소재가 보들보들해서 살에 닿는 감촉이 좋았어요.","촉감이 부드러워서 만질 때마다 기분이 좋아요."],
+  "주변 추천":["써보고 좋아서 주변에도 바로 추천했어요.","친구들한테 자랑하고 싶을 만큼 만족스러웠어요."],
+  "선물용 적합":["패키지가 예뻐서 선물용으로도 딱이에요.","받는 사람이 좋아할 것 같아 선물로 하나 더 샀어요."],
+  "디자인 대만족":["디자인이 예뻐서 볼 때마다 잘 샀다 싶어요.","군더더기 없이 깔끔한 디자인이라 어디에나 잘 어울려요."],
+  "마감 깔끔":["마감이 깔끔해서 티 하나 없이 완성도가 높았어요.","바느질이며 마감이 꼼꼼해서 고급스러워 보였어요."],
+  "사이즈 딱 맞음":["사이즈가 딱 맞아서 수선할 필요도 없었어요.","치수 그대로라 사이즈 걱정 없이 잘 맞았어요."],
+  "인생 꿀템":["써보고 바로 인생템 등극했어요. 왜 이제 샀나 싶어요.","이건 진짜 꿀템이에요. 하나 더 쟁여두고 싶어요."],
+  "관리 편함":["관리가 편해서 손 갈 일이 없어 좋아요.","세탁도 손질도 간편해서 부담 없이 써요."],
+  "유행 안 탐":["유행 안 타는 디자인이라 오래 쓸 것 같아요.","질리지 않는 디자인이라 두고두고 쓸 만해요."],
+  "유용한 기능":["생각지 못한 기능까지 있어서 쓸수록 편리해요.","기능이 알차서 쓸수록 손이 자주 가요."],
+  "설명서 자세함":["설명서가 자세해서 처음 써도 헤맬 일이 없었어요.","사용법이 꼼꼼히 적혀 있어서 바로 이해했어요."],
+  "가죽 부드러움":["가죽이 부드러워서 손에 닿는 느낌이 고급스러워요.","촉감 좋은 가죽이라 쓸수록 정이 가요."],
+  "탄탄한 포장":["포장이 탄탄해서 험하게 와도 멀쩡했어요.","단단하게 싸여 와서 안심이 됐어요."],
+  "가격 대비 만족":["가격 대비 만족스러워서 잘 샀다 싶어요.","이 값에 이 정도면 남는 장사예요."],
+  "결점 없는 퀄리티":["흠잡을 데 없는 퀄리티라 하나하나 마음에 들었어요.","꼼꼼히 봐도 결점이 없어서 믿고 쓸 만해요."],
+  "데일리 필수품":["매일 손이 가는 걸 보니 필수품이 됐어요.","한번 쓰고 나니 없으면 허전한 데일리템이에요."],
+  "색감 예쁨":["색감이 화면보다 예뻐서 볼 때마다 기분이 좋아요.","색이 곱게 잘 빠져서 실물이 더 예뻐요."],
+  "고급스러운 패키지":["패키지부터 고급스러워서 언박싱하는 맛이 있었어요.","포장 상자까지 신경 쓴 티가 나서 선물 받은 기분이었어요."],
+  // 배달
+  "신속한 배달":["주문하자마자 온 것처럼 배달이 빨라서 놀랐어요.","기다릴 틈도 없이 금방 도착해서 따뜻하게 먹었어요."],
+  "따끈따끈함":["문 열자마자 따끈따끈해서 갓 만든 걸 먹는 것 같았어요.","배달인데도 김이 모락모락, 온기가 그대로였어요."],
+  "요청사항 반영":["요청사항을 하나도 빠짐없이 챙겨주셔서 감동이었어요.","적어둔 대로 딱 맞춰주셔서 기분 좋게 먹었어요."],
+  "리뷰 약속":["리뷰 약속 잊지 않고 서비스까지 챙겨주셨어요.","약속대로 챙겨주셔서 정 있는 사장님이라 느꼈어요."],
+  "라이더 친절":["라이더분이 친절하게 전달해주셔서 기분이 좋았어요.","배달 오신 분이 상냥하셔서 첫인상부터 좋았어요."],
+  "푸짐한 서비스":["서비스를 푸짐하게 챙겨주셔서 감동했어요.","덤으로 이것저것 넣어주셔서 인심이 후하더라고요."],
+  "정성 가득":["한 그릇에도 정성이 가득 담겨 있어서 든든했어요.","대충이 없어요. 정성 들인 티가 그대로 났어요."],
+  "따뜻한 국물":["국물이 식지 않고 뜨끈하게 와서 속이 확 풀렸어요.","따뜻한 국물 그대로라 배달이 맞나 싶었어요."],
+  "바삭한 튀김":["튀김이 눅눅하지 않고 바삭해서 갓 튀긴 것 같았어요.","배달인데도 바삭함이 살아있어서 놀랐어요."],
+  "안전한 포장":["포장이 안전해서 국물 하나 안 새고 왔어요.","꼼꼼히 밀봉돼 와서 흐트러짐 없이 도착했어요."],
+  "가성비 폭발":["이 양에 이 가격이라니 가성비가 폭발해요.","가격 대비 양도 맛도 훌륭해서 자주 시킬 것 같아요."],
+  "양 정말 많음":["양이 정말 많아서 두 끼로 나눠 먹었어요.","넉넉하게 담겨 와서 배부르게 먹었어요."],
+  "흘림 없음":["국물 하나 안 흘리고 깔끔하게 와서 좋았어요.","꽉 밀봉돼 있어서 새는 것 없이 도착했어요."],
+  "빠른 조리":["조리가 빨라서 배고플 때 시켜도 금방 왔어요.","주문 후 얼마 안 돼서 따끈하게 도착했어요."],
+  "가족 저녁":["온 가족 저녁으로 시켰는데 다들 만족했어요.","가족끼리 든든하게 한 끼 해결하기 딱이었어요."],
+  "야식 강력 추천":["야식으로 시켰는데 진리였어요. 강력 추천해요.","밤에 이거 시키면 후회 없어요. 야식 최고예요."],
+  "또 주문할게요":["맛있어서 벌써 다음 주문을 예약해뒀어요.","두말 필요 없이 또 시킬 거예요."],
+  "완벽한 밀봉":["완벽하게 밀봉돼 와서 위생 걱정 없이 먹었어요.","빈틈없이 포장돼 있어서 안심하고 먹었어요."],
+  "소스 넉넉":["소스를 넉넉히 넣어주셔서 부족함 없이 먹었어요.","소스 인심이 후해서 찍어 먹는 재미가 있었어요."],
+  "단골 예약":["첫 주문부터 단골 예약이에요. 계속 시킬 것 같아요.","맛보고 바로 단골집 등록했어요."],
+  "신선도 유지":["신선도가 그대로라 재료 상태가 좋았어요.","배달인데도 재료가 싱싱해서 만족스러웠어요."],
+  "따뜻하게 도착":["식지 않고 따뜻하게 도착해서 갓 만든 맛 그대로였어요.","온기가 살아있어서 배달인 걸 잊을 정도였어요."],
+  "위생적인 포장":["포장이 위생적이라 먹기 전부터 믿음이 갔어요.","깔끔하게 밀봉돼 와서 안심하고 먹었어요."],
+  // 미용
+  "인생 스타일":["원하던 스타일 그대로 나와서 인생 스타일 건졌어요.","거울 보고 반했어요. 이런 스타일 처음이에요."],
+  "세련된 감각":["디자이너분 감각이 세련돼서 믿고 맡길 수 있었어요.","트렌드를 잘 아셔서 딱 요즘 스타일로 해주셨어요."],
+  "친절한 상담":["상담부터 친절해서 원하는 걸 편하게 말할 수 있었어요.","꼼꼼히 상담해주셔서 결과까지 만족스러웠어요."],
+  "깔끔한 샵":["샵이 깔끔해서 있는 내내 기분이 좋았어요.","공간이 정돈돼 있어서 관리받기 쾌적했어요."],
+  "어울리는 컷":["얼굴형에 딱 맞는 컷으로 해주셔서 만족스러웠어요.","나한테 어울리는 컷을 정확히 잡아주셨어요."],
+  "꼼꼼한 시술":["시술을 꼼꼼히 해주셔서 마무리까지 완벽했어요.","하나하나 세심하게 봐주셔서 믿음이 갔어요."],
+  "두피 마사지":["중간중간 두피 마사지까지 해주셔서 힐링됐어요.","마사지가 시원해서 나른하게 쉬다 왔어요."],
+  "손상 최소화":["손상 없이 관리해주셔서 머릿결이 그대로예요.","약을 세심하게 써주셔서 상함 없이 예쁘게 됐어요."],
+  "네일 디자인 대만족":["네일 디자인이 딱 원하던 대로라 대만족이에요.","손끝 볼 때마다 기분 좋아지는 디자인이에요."],
+  "지속력 최고":["시간이 지나도 그대로라 지속력 하나는 최고예요.","오래가서 자주 안 와도 될 것 같아요."],
+  "친절한 소통":["소통이 편해서 원하는 걸 정확히 전달할 수 있었어요.","계속 물어봐 주셔서 어긋남 없이 진행됐어요."],
+  "편안한 대기실":["대기실이 편해서 기다리는 시간도 편안했어요.","공간이 아늑해서 대기하는 동안 쉬는 기분이었어요."],
+  "맞춤형 서비스":["내 상태에 맞춰 딱 맞는 케어를 해주셨어요.","획일적이지 않고 나한테 맞춰주셔서 좋았어요."],
+  "트렌디한 스타일":["요즘 유행하는 스타일로 감각 있게 해주셨어요.","트렌디하게 잡아주셔서 어디 가서든 자신 있어요."],
+  "재방문 의사 100%":["두말할 것 없이 또 올 거예요. 재방문 100%예요.","여기만 다니려고요. 재방문 의사 확실해요."],
+  "예약 편리":["예약이 편해서 원하는 시간에 쉽게 잡았어요.","예약 과정이 간편해서 번거로움이 없었어요."],
+  "합리적인 가격":["퀄리티에 비해 가격이 합리적이라 부담 없었어요.","이 정도 서비스에 이 가격이면 아주 만족이에요."],
+  "꼼꼼한 마감":["마감까지 꼼꼼하게 봐주셔서 완성도가 높았어요.","디테일 하나 놓치지 않고 마무리해주셨어요."],
+  "섬세한 손길":["손길이 섬세해서 맡기는 내내 편안했어요.","조심스럽게 다뤄주셔서 믿고 맡길 수 있었어요."],
+  "모발 관리 꿀팁":["집에서 할 수 있는 관리 꿀팁까지 알려주셨어요.","관리법을 자세히 알려주셔서 유용했어요."],
+  "만족도 최상":["결과부터 과정까지, 이보다 만족스러울 수 없어요.","기대 이상이라 나올 때 절로 웃음이 났어요."],
+  "실력 있는 디자이너":["디자이너분 실력이 좋아서 믿고 맡겼어요.","손이 빠르고 정확하셔서 결과가 완벽했어요."],
+  "아늑한 조명":["조명이 아늑해서 있는 내내 마음이 편안했어요.","은은한 조명 덕에 분위기가 참 좋았어요."],
+  "기분전환 성공":["다녀오고 나니 기분 전환 제대로 됐어요.","새 단장하고 나오니 발걸음이 다 가벼웠어요."],
+  // 운동
+  "친절한 트레이너":["트레이너분이 친절해서 운동이 하나도 안 무서웠어요.","편하게 알려주셔서 초보인 저도 잘 따라갔어요."],
+  "체계적인 수업":["수업이 체계적이라 뭘 해야 할지 헤맬 일이 없었어요.","단계별로 차근차근 이끌어주셔서 효과가 확실했어요."],
+  "쾌적한 시설":["시설이 쾌적해서 운동할 맛이 나더라고요.","공간이 넓고 깨끗해서 갈 때마다 기분이 좋아요."],
+  "최신 기구":["기구가 다 최신이라 다양하게 운동할 수 있었어요.","장비가 좋아서 하고 싶은 운동을 마음껏 했어요."],
+  "깨끗한 샤워실":["샤워실이 깨끗해서 운동 후 개운하게 씻고 나왔어요.","샤워 공간이 청결해서 기분 좋게 마무리했어요."],
+  "맞춤 프로그램":["제 몸에 맞춰 프로그램을 짜주셔서 효과가 좋았어요.","목표에 맞게 딱 맞춰주셔서 동기부여가 됐어요."],
+  "재등록 의사":["두말할 것 없이 재등록할 거예요. 계속 다닐게요.","끝나도 또 등록하려고요. 그만큼 만족스러웠어요."],
+  "유연한 시간":["시간대가 유연해서 바쁜 날에도 다니기 좋았어요.","원하는 시간에 맞춰 갈 수 있어서 부담이 없었어요."],
+  "동기부여 확실":["갈 때마다 동기부여가 확실해서 꾸준히 나가게 돼요.","계속 자극을 주셔서 중간에 포기할 틈이 없었어요."],
+  "초보자 배려":["초보라 걱정했는데 하나하나 배려해주셔서 편했어요.","기초부터 챙겨주셔서 무리 없이 따라갔어요."],
+  "넓은 운동 공간":["공간이 넓어서 붐비지 않고 여유롭게 운동했어요.","자리가 넉넉해서 기구 기다릴 일이 없었어요."],
+  "열정적인 코치":["코치님이 열정적이셔서 저까지 힘이 나더라고요.","에너지 넘치게 이끌어주셔서 운동이 즐거웠어요."],
+  "꼼꼼한 자세 교정":["자세를 하나하나 교정해주셔서 제대로 배웠어요.","잘못된 습관까지 꼼꼼히 잡아주셔서 효과가 컸어요."],
+  "샤워실 청결":["샤워실이 늘 청결하게 관리돼 있어서 좋았어요.","씻는 공간이 깨끗해서 운동 후가 개운했어요."],
+  // 기타
+  "만족스러운 결과":["결과가 만족스러워서 이용하길 잘했다 싶었어요.","기대한 대로 나와서 마음에 쏙 들었어요."],
+  "재이용 의사":["또 이용할 거예요. 재이용 의사 확실합니다.","다음에도 여기로 정했어요. 그만큼 좋았어요."],
+  "깔끔한 시설":["시설이 깔끔해서 이용하는 내내 쾌적했어요.","공간이 정돈돼 있어서 기분 좋게 이용했어요."],
+  "빠른 처리":["처리가 빨라서 기다림 없이 끝났어요.","일사천리로 진행돼서 시간을 아꼈어요."],
+  "세심한 배려":["작은 것까지 세심하게 배려해주셔서 감동이었어요.","챙겨주시는 게 느껴져서 기분 좋게 이용했어요."],
+  "추천하고 싶은":["주변에 자신 있게 추천하고 싶은 곳이에요.","좋아서 지인들한테 먼저 알려주고 싶었어요."],
+  "기대 이상":["기대 이상이라 다녀오고도 계속 여운이 남았어요.","생각보다 훨씬 좋아서 기분 좋게 이용했어요."],
+  "편리한 이용":["처음부터 끝까지 편리하게 이용할 수 있었어요.","이용 과정이 매끄러워서 불편함이 없었어요."],
+  "믿음이 가는":["하나하나 믿음이 가서 안심하고 맡겼어요.","꼼꼼하게 챙겨주셔서 신뢰가 갔어요."],
+  "다시 찾고 싶은":["다녀오고 나니 또 오고 싶어지는 곳이에요.","여운이 남아서 금방 다시 찾을 것 같아요."]
+};
+function keywordSentence(kw){const a=KEYWORD_SENTENCES[kw];return a?pick(a):null;}
+
+// 감탄/칭찬 슬랭 → 자연스러운 한 문장으로 확장 (명사 슬롯에 끼우지 않고 별도 문장 생성)
+const PRAISE_EXPAND={
+  "존맛":"한 입 먹자마자 존맛이라는 말이 절로 나왔어요. 진짜 맛있었습니다.",
+  "존맛탱":"한마디로 존맛탱이었어요. 맛에서는 흠잡을 데가 없었습니다.",
+  "jmt":"진짜 JMT였어요. 맛집이라는 소문이 괜히 난 게 아니더라고요.",
+  "꿀맛":"한 입 먹는 순간 꿀맛이라 젓가락을 멈출 수가 없었어요.",
+  "대박":"솔직히 말해서 그냥 대박이었어요. 기대를 훌쩍 뛰어넘었습니다.",
+  "짱":"한마디로 여기 짱이에요. 다녀온 사람만 아는 만족감이 있었습니다.",
+  "최고":"두말할 것 없이 최고였어요. 별점을 더 줄 수 없는 게 아쉬울 정도였습니다.",
+  "갓생":"여기 다녀온 것만으로도 갓생 산 기분이었어요.",
+  "인생":"과장 조금 보태서 인생 맛집이라 불러도 될 만큼 좋았어요.",
+  "인생맛집":"진심으로 인생 맛집을 만난 기분이었어요. 오래 기억에 남을 것 같습니다.",
+  "가성비":"가성비도 정말 훌륭해서 부담 없이 즐길 수 있었어요.",
+  "갓성비":"이 정도면 갓성비라고 불러도 될 만큼 만족스러웠어요.",
+  "감성":"공간 곳곳에 감성이 살아있어서 사진 찍는 재미까지 있었어요.",
+  "갬성":"갬성 넘치는 분위기라 머무는 내내 기분이 좋았습니다.",
+  "핵꿀":"한마디로 핵꿀이었어요. 안 왔으면 후회할 뻔했습니다.",
+  "찐":"여기가 진짜 찐이구나 싶었어요. 괜히 유명한 게 아니더라고요.",
+  "레전드":"솔직히 레전드였어요. 다녀온 지 한참인데도 계속 생각나요.",
+  "미쳤다":"과장 조금 보태서 미쳤다는 말이 절로 나올 정도였어요.",
+  "존예":"눈이 즐거울 만큼 존예라, 사진부터 찍고 시작했어요.",
+  "혜자":"양도 구성도 혜자라, 이 가격에 이렇게까지 싶었습니다.",
+  "강추":"두말할 것 없이 강추예요. 고민 중이라면 그냥 가보시길 권해요.",
+  "웰메이드":"디테일 하나까지 웰메이드라, 만듦새에서 정성이 느껴졌어요.",
+  "만족":"한마디로 대만족이에요. 아쉬운 구석을 찾기가 더 어려웠습니다.",
+  "느좋":"한마디로 느좋이에요. 분위기부터 취향을 제대로 저격했습니다.",
+  "느낌좋음":"느낌 좋다는 말이 딱이에요. 있는 내내 기분이 살았습니다.",
+  "도파민":"한 방에 도파민이 확 도는 느낌이라, 스트레스가 싹 풀렸어요.",
+  "고퀄":"퀄리티가 고퀄이라 이 값이 맞나 싶을 만큼 만족스러웠어요.",
+  "갓퀄":"이건 그냥 갓퀄이에요. 어디 하나 아쉬운 구석이 없었습니다."
+};
+function isPraiseWord(kw){return Object.prototype.hasOwnProperty.call(PRAISE_EXPAND,kw.toLowerCase());}
+function praisePhrase(kw){return PRAISE_EXPAND[kw.toLowerCase()];}
+
+// 리뷰에 섞을 이모지 (별점 톤별)
+const EMOJI={
+  pos:["😋","👍","🔥","😍","🤤","👏","🥰","✨","💯","😊"],
+  mid:["🙂","😐","🤔","😌"],
+  neg:["😕","😔","🥲","😮‍💨","😞"]
+};
+
+// ---- 별점별 톤 pool ----
+const POS5_BOOST=[
+  "한마디로 여기, 진심 강력 추천이에요. 별 다섯 개가 하나도 아깝지 않습니다.",
+  "돌아서기 무섭게 또 찾고 싶을 만큼 최고였어요.",
+  "올해 다녀온 곳 중에 손에 꼽을 정도로 만족스러웠습니다. 정말 강추해요!",
+  "괜히 인기 있는 게 아니구나 싶을 만큼, 모든 게 기대 이상이었어요.",
+  "이런 곳은 소문내고 싶어서라도 후기를 안 남길 수가 없네요. 강력 추천합니다!",
+  "만족스러운 걸 넘어서 살짝 감동까지 했어요. 오랜만에 별점 다 드립니다."
+];
+const POS4_NOTE=[
+  "아주 사소하게 아쉬운 데가 없진 않았지만, 크게 걸릴 정도는 아니었어요.",
+  "완벽까진 아니어도 다시 찾고 싶을 만큼 좋았어요.",
+  "딱 한 군데만 손보면 완벽하겠다 싶을 만큼, 대체로 좋았어요.",
+  "기대만큼, 아니 그 이상으로 즐거운 시간이었어요."
+];
+const MID_OPEN=[
+  "{kw0}, 좋았던 점과 아쉬웠던 점을 솔직하게 남겨봅니다.",
+  "기대 반 걱정 반으로 이용했는데, 느낀 점을 있는 그대로 적어볼게요.",
+  "나쁘지도 특별하지도 않았던 경험이라, 담백하게 후기를 남깁니다."
+];
+const MID_CON=[
+  "다만 {kw:은} 조금 더 신경 써주셨으면 하는 아쉬움이 남았어요.",
+  "반대로 {kw:은} 기대만큼은 아니어서 조금 아쉬웠습니다.",
+  "{kw:은} 무난했지만 특별히 인상적이진 않았어요.",
+  "{kw}, 나쁘진 않았지만 딱히 기억에 남을 정도는 아니었어요."
+];
+const MID_CLOSE=[
+  "전체적으로 나쁘지 않았지만, 다시 이용할지는 조금 고민이 될 것 같아요. 참고만 하세요.",
+  "무난했어요. 크게 흠잡을 데도, 크게 감동할 데도 없었습니다.",
+  "가격 대비 그럭저럭이었어요. 취향에 따라 갈릴 것 같습니다."
+];
+const MID_FILLER=[
+  "특별히 기대를 걸지 않는다면 무난하게 이용할 만했어요.",
+  "좋은 점과 아쉬운 점이 반반이라, 판단은 각자 몫일 것 같습니다.",
+  "다시 생각해도 평범했다는 인상이 가장 크게 남네요.",
+  "썩 나쁘지도, 그렇다고 특별하지도 않은 딱 중간이었어요.",
+  "한 번쯤은 괜찮지만 꼭 다시 찾을 이유까지는 없었습니다."
+];
+const NEG_OPEN=[
+  "{kw0}, 기대를 안고 골랐는데 아쉬운 점이 많아 솔직하게 남깁니다.",
+  "후기를 보고 선택했는데 기대에 한참 못 미쳐서, 다음 분들을 위해 적어둬요.",
+  "실망스러웠던 경험이라, 냉정하게 느낀 점을 기록해둡니다."
+];
+const NEG_BODY=[
+  "{kw:이} 특히 아쉬웠어요. 기대했던 만큼이 아니어서 실망이 남았습니다.",
+  "{kw:은} 생각보다 많이 별로였어요. 다시 찾을 이유가 되기엔 부족했습니다.",
+  "{kw:은} 개선이 꼭 필요해 보였어요. 사진이나 후기와는 차이가 컸습니다.",
+  "{kw:을} 기대했다면 실망할 수도 있겠더라고요.",
+  "{kw:은} 솔직히 아쉬움이 컸어요. 이 정도일 줄은 예상하지 못했습니다.",
+  "{kw}, 여기서 특히 실망이 컸어요. 후기와는 온도차가 꽤 있었습니다."
+];
+const NEG_CLOSE=[
+  "재이용은 솔직히 망설여질 것 같아요. 다음엔 나아지길 바라며 후기 남깁니다.",
+  "가격을 생각하면 아쉬움이 크게 남는 경험이었어요. 참고하시면 좋겠습니다.",
+  "기대하고 이용하시는 분이라면 한 번 더 고민해보시길 권해요."
+];
+const NEG_FILLER=[
+  "전체적으로 아쉬움이 남아 마음이 편치는 않았어요.",
+  "곳곳에서 조금 더 신경 썼으면 하는 부분들이 눈에 띄었습니다.",
+  "기대가 컸던 만큼 실망도 컸던 경험이었어요.",
+  "다시 생각해도 만족스럽다고 말하긴 어려운 경험이었습니다.",
+  "좋았다고 말하기엔 아쉬운 순간이 더 많았어요.",
+  "다음엔 여러 부분이 달라져 있길 바라게 되네요.",
+  "솔직히 후기를 남기기까지 조금 고민이 될 만큼 아쉬웠습니다.",
+  "기대치를 낮춰야 그나마 실망이 덜할 것 같았어요."
+];
+
+// 템플릿 채우기: {kw}, {kw:이|은|을|이라는}, {kw0...}, {loc}, {svc}
+function fill(t, kw, kw0, svc, loc){
+  return t
+    .replace(/\{kw0:(이|은|을|와|으로|이라는)\}/g,(_,p)=>josa(kw0,p))
+    .replace(/\{kw:(이|은|을|와|으로|이라는)\}/g,(_,p)=>josa(kw,p))
+    .replace(/\{kw0\}/g, kw0||"")
+    .replace(/\{kw\}/g, kw||"")
+    .replace(/\{loc\}/g, loc||kw0||"")
+    .replace(/\{svc\}/g, svc||"정성껏 챙겨주셔서");
+}
+
+function generate(){
+  let raw = document.getElementById("keywords").value.trim();
+  if(!raw){ shake(); return null; }
+  let kws = raw.split(/[,，·\n]/).map(s=>s.trim()).filter(Boolean);
+  if(kws.length===0){ shake(); return null; }
+
+  const bank = BANK[state.type];
+  const target = +lenRange.value;
+  const rating = state.rating;
+  const tier = rating>=4 ? "pos" : (rating===3 ? "mid" : "neg");
+
+  // 시간 키워드(주말 등)는 리뷰에서 제외
+  kws = kws.filter(k=>!isTime(k));
+  if(kws.length===0){ shake(); return null; }
+
+  // 키워드 분류: 지역(장소), 서비스/태도, 감탄·칭찬 슬랭, 나머지(특징)
+  const locationKws = kws.filter(isLocation);
+  const serviceKws  = kws.filter(k=>!isLocation(k) && isServiceWord(k));
+  const praiseKws   = kws.filter(k=>!isLocation(k) && !isServiceWord(k) && isPraiseWord(k));
+  let featureKws    = kws.filter(k=>!isLocation(k) && !isServiceWord(k) && !isPraiseWord(k));
+  const loc   = locationKws[0] || "";
+  const topic = featureKws[0] || locationKws[0] || kws[0]; // 오프너 등에서 쓸 주제어
+  const svcPhrase = serviceKws.length ? SERVICE_EXPAND[pick(serviceKws)] : "정성껏 챙겨주셔서";
+  const F = (t,k)=> fill(t, k, topic, svcPhrase, loc);
+
+  // 키워드별 전용 문장 우선 → 서술형(여러 단어)은 공용 전용 문장 → 단어형은 업종 본문
+  const isPhrase = k=>/\s/.test(k);
+  const bodyFor = (k,pool,idx)=>{
+    const ks = keywordSentence(k);
+    if(ks) return F(ks, k);
+    return isPhrase(k) ? F(pick(PHRASE_BODY), k) : F(pool[idx % pool.length], k);
+  };
+
+  // 도입/마무리(항상 포함)와 본문 후보(우선순위 순)를 톤에 맞게 구성
+  let opener, closer, content=[], fillerPool;
+
+  if(tier==="neg"){
+    // ── 부정 톤 (별점 1~2) ──
+    opener = F(pick(NEG_OPEN));
+    closer = F(pick(NEG_CLOSE));
+    const negPool = shuffle(NEG_BODY);
+    content = featureKws.map((k,idx)=> F(negPool[idx % negPool.length], k));
+    fillerPool = shuffle(NEG_FILLER);
+
+  } else if(tier==="mid"){
+    // ── 중립 톤 (별점 3) ──
+    opener = F(pick(MID_OPEN));
+    closer = F(pick(MID_CLOSE));
+    const bodyPool = shuffle(bank.body);
+    content = featureKws.map((k,idx)=> idx % 2 === 0 ? bodyFor(k,bodyPool,idx) : F(pick(MID_CON), k));
+    if(featureKws.length<=1) content.push(F(pick(MID_CON), topic));
+    fillerPool = shuffle(MID_FILLER);
+
+  } else {
+    // ── 긍정 톤 (별점 4~5) ──
+    const openPool = (loc && bank.openLoc) ? bank.openLoc : bank.open;
+    opener = F(pick(openPool));
+    closer = F(pick(bank.close));
+    const bodyPool = shuffle(bank.body);
+    // 반응 키워드(존맛·느좋 등)를 앞쪽에 배치해 짧은 목표에서도 잘리지 않게
+    praiseKws.forEach(k=> content.push(praisePhrase(k)));
+    featureKws.forEach((k,idx)=> content.push(bodyFor(k,bodyPool,idx)));
+    if(serviceKws.length || Math.random()<0.7)                     // 서비스 문장
+      content.push(F(pick(bank.service), topic));
+    content.push(rating===5 ? pick(POS5_BOOST) : pick(POS4_NOTE)); // 별점별 마무리 톤
+    fillerPool = shuffle(state.type==="product" ? PRODUCT_FILLER : FILLER);
+  }
+
+  // 리뷰에 섞을 이모지 (톤별, 1~2개)
+  const epool = EMOJI[tier];
+  const openEmoji = tier==="pos" ? " "+pick(epool) : "";  // 긍정이면 도입부에도 하나
+
+  // 목표 길이에 맞춰 조립 (도입+마무리는 필수, 나머지는 목표 안에서 채움)
+  const parts = [opener + openEmoji];
+  const closerLen = closer.length + 3;
+  const curLen = ()=> parts.join(" ").length + closerLen;
+  for(const s of content){
+    if(curLen() >= target) break;   // 목표를 넘어서기 직전까지만 본문 추가
+    parts.push(s);
+  }
+  let fi=0;                          // 아직 모자라면 채움 문장으로 보정
+  while(curLen() < target && fi < fillerPool.length){
+    parts.push(fillerPool[fi]); fi++;
+  }
+  parts.push(closer + " " + pick(epool));  // 마무리에 이모지 하나
+  return parts.join(" ");
+}
+
+function render(text){
+  const out=document.getElementById("output");
+  document.getElementById("emptyState").style.display="none";
+  out.style.display="block";
+  document.getElementById("actions").style.display="flex";
+  out.value=text;
+  document.getElementById("charCount").textContent=text.length;
+}
+
+// 동전 짤랑~ 효과음 (Web Audio, 외부 파일 없이 합성)
+let _actx;
+function playCoin(){
+  try{
+    _actx = _actx || new (window.AudioContext||window.webkitAudioContext)();
+    if(_actx.state==="suspended") _actx.resume();
+    const now=_actx.currentTime;
+    [[988,0],[1319,0.09]].forEach(([f,t])=>{      // 아케이드 동전음 (B5→E6)
+      const o=_actx.createOscillator(), g=_actx.createGain();
+      o.type="square"; o.frequency.value=f;
+      o.connect(g); g.connect(_actx.destination);
+      g.gain.setValueAtTime(0.0001, now+t);
+      g.gain.exponentialRampToValueAtTime(0.22, now+t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+t+0.16);
+      o.start(now+t); o.stop(now+t+0.18);
+    });
+  }catch(e){}
+}
+
+const genBtn=document.getElementById("genBtn");
+genBtn.onclick=()=>{
+  const t=generate(); if(!t) return;           // 키워드 없으면 흔들기만
+  playCoin();                                    // 동전 넣는 소리
+  genBtn.classList.remove("inserting");
+  void genBtn.offsetWidth;                       // 애니메이션 재시작
+  genBtn.classList.add("inserting");             // 동전 투입 애니메이션
+  setTimeout(()=>{ render(t); genBtn.classList.remove("inserting"); }, 430);
+};
+document.getElementById("regenBtn").onclick=()=>{
+  const t=generate(); if(t) render(t);
+};
+document.getElementById("output").oninput=e=>{
+  document.getElementById("charCount").textContent=e.target.value.length;
+};
+
+// copy
+const copyBtn=document.getElementById("copyBtn");
+copyBtn.onclick=async()=>{
+  const text=document.getElementById("output").value;
+  if(!text) return;
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){
+    const out=document.getElementById("output"); out.select(); document.execCommand("copy");
+    window.getSelection().removeAllRanges();
+  }
+  showToast();
+  copyBtn.textContent="복사 완료"; copyBtn.classList.add("done");
+  setTimeout(()=>{copyBtn.textContent="복사하기";copyBtn.classList.remove("done");},1600);
+};
+
+// enter key to generate
+document.getElementById("keywords").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault(); const t=generate(); if(t) render(t); }
+});
+
+function showToast(){
+  const el=document.getElementById("toast");
+  el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1600);
+}
+function shake(){
+  const inp=document.getElementById("keywords");
+  inp.style.borderColor="var(--warn)";
+  inp.placeholder="키워드부터 좀 주세요... 빈손이면 저도 곤란해요";
+  setTimeout(()=>{inp.style.borderColor="";setPlaceholder();},1200);
+  inp.focus();
+}
+</script>
+</body>
+</html>
